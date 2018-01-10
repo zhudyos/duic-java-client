@@ -1,0 +1,115 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id "net.researchgate.release" version "2.6.0"
+}
+
+apply plugin: "java"
+apply plugin: "jacoco"
+apply plugin: "maven"
+apply plugin: 'signing'
+
+group "io.zhudy.duic"
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+[compileJava, compileTestJava, javadoc]*.options*.encoding = "UTF-8"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly "com.google.code.gson:gson:2.8.2"
+    compileOnly "com.fasterxml.jackson.core:jackson-databind:2.9.3"
+
+    compile "org.slf4j:slf4j-api:1.7.25"
+    compile "com.squareup.okhttp3:okhttp:3.9.1"
+
+    testCompile "org.mockito:mockito-core:+"
+    testCompile "com.fasterxml.jackson.core:jackson-databind:2.9.3"
+    // testCompile "com.google.code.gson:gson:2.8.2"
+    testCompile "com.squareup.okhttp3:mockwebserver:3.9.1"
+}
+
+jacoco {
+    toolVersion = '0.7.9'
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+if (project.hasProperty("signing.keyId")) {
+    signing {
+        sign configurations.archives
+    }
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "http://maven.xing-ai.net/nexus/content/repositories/releases") {
+                    authentication(userName: "deployment", password: "deployment")
+                }
+                snapshotRepository(url: "http://maven.xing-ai.net/nexus/content/repositories/snapshots") {
+                    authentication(userName: "deployment", password: "deployment")
+                }
+
+                pom.project {
+                    name "duic-java-client"
+                    artifactId "duic-java-client"
+                    packaging "jar"
+                    description "DuiC 统一配置管理 Java Client 工具包"
+                    url "https://github.com/zhudyos/duic-java-client"
+
+                    scm {
+                        url "https://github.com/zhudyos/duic-java-client.git"
+                        connection "scm:git:git://github.com/zhudyos/duic-java-client.git"
+                        developerConnection "scm:git:git@github.com:zhudyos/duic-java-client.git"
+                    }
+
+                    licenses {
+                        license {
+                            name "The Apache License, Version 2.0"
+                            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id "kevin70"
+                            name "Kevin Zou"
+                            email "kevinz@weghst.com"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
