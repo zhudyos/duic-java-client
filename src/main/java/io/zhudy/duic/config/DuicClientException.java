@@ -17,6 +17,15 @@ public class DuicClientException extends RuntimeException {
     }
 
     /**
+     *
+     * @param message
+     * @param cause
+     */
+    public DuicClientException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
      * 带有目标异常的构造函数.
      *
      * @param cause 目标异常

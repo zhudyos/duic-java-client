@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -139,7 +140,7 @@ public class Config {
         private String name;
         private String profile;
         private String configToken;
-        private ReloadPlot reloadPlot;
+        private ReloadPlot reloadPlot = new ReloadPlot(30, TimeUnit.SECONDS);
         private boolean failFast;
 
         /**

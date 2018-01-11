@@ -26,6 +26,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly "javax.servlet:javax.servlet-api:4.0.0"
     compileOnly "com.google.code.gson:gson:2.8.2"
     compileOnly "com.fasterxml.jackson.core:jackson-databind:2.9.3"
 
@@ -74,11 +75,12 @@ if (project.hasProperty("signing.keyId")) {
             mavenDeployer {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-                repository(url: "http://maven.xing-ai.net/nexus/content/repositories/releases") {
-                    authentication(userName: "deployment", password: "deployment")
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: System.env.OSSRH_USERNAME, password: System.env.OSSRH_PASSWORD)
                 }
-                snapshotRepository(url: "http://maven.xing-ai.net/nexus/content/repositories/snapshots") {
-                    authentication(userName: "deployment", password: "deployment")
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: System.env.OSSRH_USERNAME, password: System.env.OSSRH_PASSWORD)
                 }
 
                 pom.project {
