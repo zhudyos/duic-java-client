@@ -95,7 +95,9 @@ public class Config {
     private void loadProperties() {
         try {
             state = getState();
+            long b = System.currentTimeMillis();
             properties = DuicClientUtils.getProperties(propsUrl, configToken);
+            log.info("加载 DuiC 配置 [{},{}ms]", propsUrl, System.currentTimeMillis() - b);
         } catch (RuntimeException e) {
             if (failFast) {
                 throw e;
