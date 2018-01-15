@@ -1,1 +1,95 @@
-duic-java-client
+https://github.com/zhudyos/duic[DuiC] 统一配置管理 Java/Android 工具包
+
+=== 功能
+. 加载 DuiC 配置
+. 定期检查 DuiC 配置更新
+. 提供 `ConfigUtils` 获取配置 API
+
+=== 使用
+maven::
+[xml]
+----
+<dependency>
+  <groupId>io.zhudy.duic</groupId>
+  <artifactId>duic-java-client</artifactId>
+  <version>1.0.0</version>
+</dependency>
+----
+
+gradle::
+[groovy]
+----
+compile "io.zhudy.duic:duic-java-client:1.0.0"
+----
+
+[IMPORTANT]
+====
+duic-java-client 采用的 `json` 解析库为 `jackson/gson` 在使用的项目中至少要依赖下面其中一个 `json` 库
+
+```
+testCompile "com.fasterxml.jackson.core:jackson-databind:x.x.x"
+// testCompile "com.google.code.gson:gson:x.x.x"
+```
+====
+
+=== ConfigUtils API
+. ConfigUtils.containsKey(key) 判断配置是否存在
+. ConfigUtils.getBoolean(key) 获取一个 `boolean` 配置
+. ConfigUtils.getBoolean(key, defaultValue) 获取一个 `boolean` 配置不存在则返回默认值
+. ConfigUtils.getInt(key) 获取一个 `int` 配置
+. ConfigUtils.getInt(key, defaultValue) 获取一个 `int` 配置不存在则返回默认值
+. ConfigUtils.getLong(key) 获取一个 `long` 配置
+. ConfigUtils.getLong(key, defaultValue) 获取一个 `long` 配置不存在则返回默认值
+. ConfigUtils.getFloat(key) 获取一个 `float` 配置
+. ConfigUtils.getFloat(key, defaultValue) 获取一个 `float` 配置不存在则返回默认值
+. ConfigUtils.getDouble(key) 获取一个 `double` 配置
+. ConfigUtils.getDouble(key, defaultValue) 获取一个 `double` 配置不存在则返回默认值
+. ConfigUtils.getString(key) 获取一个 `String` 配置
+. ConfigUtils.getString(key, defaultValue) 获取一个 `String` 配置不存在则返回默认值
+. ConfigUtils.get(key) 获取一个 `Object` 配置
+. ConfigUtils.get(key, defaultValue) 获取一个 `Object` 配置不存在则返回默认值
+. ConfigUtils.getOrNull(key) 获取一个 `Object` 配置不存在则返回 `null`
+
+=== DuicClientUtils API
+. DuicClientUtils.getState(url) 获取服务器配置状态
+. DuicClientUtils.getState(url, configToken) 获取服务器配置状态
+. DuicClientUtils.getProperties(url) 获取服务器配置
+. DuicClientUtils.getProperties(url, configToken) 获取服务器配置
+
+=== Java/Android
+```
+Config config = new Config.Builder()
+        .baseUri("https://duic.zhudy.io/api/v1")
+        .name("hello")
+        .profile("world")
+        // .configToken("...")
+        // .reloadPlot(new ReloadPlot(10, TimeUnit.SECONDS)) // 重载
+        // .failFast(true) // 快速失败
+        .build();
+ConfigUtils.setDefaultConfig(config);
+```
+
+=== Java Web Servlet
+web.xml::
+```
+<!-- 默认配置路径 classpath:duic.properties -->
+<context-param>
+  <param-name>duicConfigLocation</param-name>
+  <param-value>classpath:duic.properties</param-value>
+</context-param>
+
+<listener>
+    <listener-class>io.zhudy.duic.config.web.DuicConfigContextListener</listener-class>
+</listener>
+```
+
+duic.properties::
+```
+duic.base.uri=https://duic.zhudy.io/api/v1
+duic.name=hello
+duic.profile=world
+duic.config.token=
+duic.reload.period=10
+duic.reload.unit=SECONDS
+duic.fail.fast=false
+```
