@@ -56,7 +56,8 @@ testCompile "com.fasterxml.jackson.core:jackson-databind:x.x.x"
 . DuicClientUtils.getProperties(url) 获取服务器配置
 . DuicClientUtils.getProperties(url, configToken) 获取服务器配置
 
-=== Java/Android
+=== Java/Android 使用
+创建 `Config` 实例并将设置为 `ConfigUtils` 的默认配置
 ```
 Config config = new Config.Builder()
         .baseUri("https://duic.zhudy.io/api/v1")
@@ -69,7 +70,7 @@ Config config = new Config.Builder()
 ConfigUtils.setDefaultConfig(config);
 ```
 
-=== Java Web Servlet
+=== Java Web Servlet 使用
 web.xml::
 ```
 <!-- 默认配置路径 classpath:duic.properties -->
