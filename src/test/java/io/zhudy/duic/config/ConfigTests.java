@@ -58,7 +58,10 @@ public class ConfigTests {
         assertEquals(ConfigUtils.getString("a.ref_string"), "ref_123456");
         assertEquals(ConfigUtils.getString("a.null_string", "null"), "null");
 
-        assertTrue(ConfigUtils.get("a.object") instanceof Map);
-        assertTrue(ConfigUtils.get("a.list") instanceof List);
+        assertEquals(ConfigUtils.getString("a.object.a"), "a");
+        assertEquals(ConfigUtils.getString("a.object.b"), "b");
+
+        assertEquals(ConfigUtils.getString("a.list[0]"), "a");
+        assertEquals(ConfigUtils.getString("a.list[1]"), "b");
     }
 }
