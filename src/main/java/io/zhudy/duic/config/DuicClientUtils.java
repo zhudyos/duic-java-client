@@ -26,9 +26,9 @@ public final class DuicClientUtils {
     static {
         httpClient = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(1, 5, TimeUnit.SECONDS))
-                .connectTimeout(1, TimeUnit.SECONDS)
-                .readTimeout(1, TimeUnit.SECONDS)
-                .writeTimeout(1, TimeUnit.SECONDS)
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.SECONDS)
+                .writeTimeout(5, TimeUnit.SECONDS)
                 .build();
     }
 
