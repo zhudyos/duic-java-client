@@ -5,8 +5,7 @@ import okhttp3.HttpUrl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -21,20 +20,22 @@ import java.util.regex.Pattern;
 public class Config {
 
     private static final Logger log = LoggerFactory.getLogger(Config.class);
-    private static final PropertyPlaceholderHelper PLACEHOLDER_HELPER = new PropertyPlaceholderHelper("${", "}");
-    private static final Pattern DOT_REGEX = Pattern.compile("\\.");
+    private static final PropertyPlaceholderHelper PLACEHOLDER_HELPER = new PropertyPlaceholderHelper("${", "}", ":", true);
 
     private String stateUrl;
     private String propsUrl;
     private String configToken;
     private String state;
     private boolean failFast;
+    private Set<DuicListener> listeners;
 
     private Map<String, Object> properties;
 
-    private Config(String baseUri, String name, String profile, String configToken, ReloadPlot plot, boolean failFast) {
+    private Config(String baseUri, String name, String profile, String configToken, ReloadPlot plot, boolean failFast,
+                   Set<DuicListener> listeners) {
         this.configToken = configToken;
         this.failFast = failFast;
+        this.listeners = listeners;
 
         stateUrl = HttpUrl.parse(baseUri).newBuilder()
                 .addPathSegments("apps/states")
@@ -66,24 +67,16 @@ public class Config {
         if (key == null || key.isEmpty()) {
             throw new ConfigNotFoundException("config key 不能为 null");
         }
-        String[] segs = DOT_REGEX.split(key);
 
-        Object p = null;
-        for (String k : segs) {
-            if (p == null) {
-                p = properties.get(k);
-            } else {
-                p = ((Map) p).get(k);
-            }
-        }
-
+        Object p = properties.get(key);
         if (p instanceof String) {
             return PLACEHOLDER_HELPER.replacePlaceholders((String) p, new PropertyPlaceholderHelper.PlaceholderResolver() {
                 @Override
                 public String resolvePlaceholder(String placeholderName) {
                     Object o = getOrNull(placeholderName);
                     if (o == null) {
-                        return "";
+                        o = System.getProperty(placeholderName);
+                        if (o == null) return System.getenv(placeholderName);
                     }
                     return o.toString();
                 }
@@ -96,8 +89,12 @@ public class Config {
         try {
             state = getState();
             long b = System.currentTimeMillis();
-            properties = DuicClientUtils.getProperties(propsUrl, configToken);
+            properties = getFlattenedMap(DuicClientUtils.getProperties(propsUrl, configToken));
             log.info("加载 DuiC 配置 [{},{}ms]", propsUrl, System.currentTimeMillis() - b);
+
+            for (DuicListener listener : listeners) {
+                listener.handle(state, properties);
+            }
         } catch (RuntimeException e) {
             if (failFast) {
                 throw e;
@@ -132,6 +129,44 @@ public class Config {
         }, plot.period, plot.period, plot.unit);
     }
 
+    protected final Map<String, Object> getFlattenedMap(Map<String, Object> source) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        buildFlattenedMap(result, source, null);
+        return result;
+    }
+
+    private void buildFlattenedMap(Map<String, Object> result, Map<String, Object> source, String path) {
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (path != null && !path.isEmpty()) {
+                if (key.startsWith("[")) {
+                    key = path + key;
+                } else {
+                    key = path + '.' + key;
+                }
+            }
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                result.put(key, value);
+            } else if (value instanceof Map) {
+                // Need a compound key
+                @SuppressWarnings("unchecked")
+                Map<String, Object> map = (Map<String, Object>) value;
+                buildFlattenedMap(result, map, key);
+            } else if (value instanceof Collection) {
+                // Need a compound key
+                @SuppressWarnings("unchecked")
+                Collection<Object> collection = (Collection<Object>) value;
+                int count = 0;
+                for (Object object : collection) {
+                    buildFlattenedMap(result, Collections.singletonMap("[" + (count++) + "]", object), key);
+                }
+            } else {
+                result.put(key, (value != null ? value : ""));
+            }
+        }
+    }
+
     private String getState() {
         return DuicClientUtils.getState(stateUrl, configToken);
     }
@@ -144,6 +179,7 @@ public class Config {
         private String configToken;
         private ReloadPlot reloadPlot = new ReloadPlot(30, TimeUnit.SECONDS);
         private boolean failFast;
+        private Set<DuicListener> listeners = new HashSet<>();
 
         /**
          * 基 uri.
@@ -206,10 +242,20 @@ public class Config {
         }
 
         /**
-         * 返回配置实例.
+         * 配置监听器。
+         *
+         * @param listener 监听器
+         */
+        public Builder listener(DuicListener listener) {
+            listeners.add(listener);
+            return this;
+        }
+
+        /**
+         * 返回配置实例。
          */
         public Config build() {
-            return new Config(baseUri, name, profile, configToken, reloadPlot, failFast);
+            return new Config(baseUri, name, profile, configToken, reloadPlot, failFast, listeners);
         }
     }
 }
