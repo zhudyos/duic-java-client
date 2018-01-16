@@ -66,6 +66,7 @@ Config config = new Config.Builder()
         // .configToken("...")
         // .reloadPlot(new ReloadPlot(10, TimeUnit.SECONDS)) // 重载
         // .failFast(true) // 快速失败
+        // .listener() // 配置加载监听
         .build();
 ConfigUtils.setDefaultConfig(config);
 ```
@@ -80,7 +81,7 @@ web.xml::
 </context-param>
 
 <listener>
-    <listener-class>io.zhudy.duic.config.web.DuicConfigContextListener</listener-class>
+  <listener-class>io.zhudy.duic.config.web.DuicConfigContextListener</listener-class>
 </listener>
 ```
 
@@ -93,4 +94,43 @@ duic.config.token=
 duic.reload.period=10
 duic.reload.unit=SECONDS
 duic.fail.fast=false
+# 多个 DuicListener 采用英文逗号(,)分隔
+duic.listeners=xx.MyDuicListener
 ```
+
+=== Spring 使用
+. 声明 `DuicConfigBeanFactoryPostProcessor` 实例
++
+```
+@Bean
+public static DuicConfigBeanFactoryPostProcessor duicConfigBeanFactoryPostProcessor() {
+  DuicConfigBeanFactoryPostProcessor processor = new DuicConfigBeanFactoryPostProcessor();
+  processor.setBaseUri("https://duic.zhudy.io/api/v1");
+  processor.setName("hello");
+  processor.setProfile("world");
+  return processor;
+}
+```
+或者在 `xml` 中声明
++
+```
+<bean id="duicConfigBeanFactoryPostProcessor" class="io.zhudy.duic.config.spring.duicConfigBeanFactoryPostProcessor">
+  <property name="baseUri" value="https://duic.zhudy.io/api/v1"/>
+  <property name="name" value="hello"/>
+  <property name="profile" value="world"/>
+</bean>
+```
+
+. 使用 `@Value` 注入配置属性
+```
+@Component
+public class Example {
+
+  @Value("${k1.string}")
+  private String k1;
+}
+```
+[TIP]
+====
+`@Value` 注入的属性可热更新，当配置变化时会重新在实例中注入新的配置属性
+====
