@@ -1,9 +1,6 @@
 package io.zhudy.duic.config.web;
 
-import io.zhudy.duic.config.Config;
-import io.zhudy.duic.config.ConfigUtils;
-import io.zhudy.duic.config.DuicClientException;
-import io.zhudy.duic.config.ReloadPlot;
+import io.zhudy.duic.config.*;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -35,6 +32,7 @@ public class DuicConfigContextListener implements ServletContextListener {
         String period = props.getProperty("duic.reload.period");
         String unit = props.getProperty("duic.reload.unit");
         String failFast = props.getProperty("duic.fail.fast");
+        String listeners = props.getProperty("duic.listeners");
 
         Config.Builder builder = new Config.Builder()
                 .baseUri(baseUri)
@@ -51,7 +49,16 @@ public class DuicConfigContextListener implements ServletContextListener {
         if (failFast != null && !failFast.isEmpty()) {
             builder.failFast(Boolean.parseBoolean(failFast));
         }
-
+        if (listeners != null && !listeners.isEmpty()) {
+            for (String c : listeners.split(",")) {
+                try {
+                    DuicListener listener = (DuicListener) Class.forName(c).newInstance();
+                    builder.listener(listener);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
+        }
         ConfigUtils.setDefaultConfig(builder.build());
     }
 
