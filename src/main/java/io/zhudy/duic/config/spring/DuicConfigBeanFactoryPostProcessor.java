@@ -10,10 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
-import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertySource;
 
 import java.util.List;
@@ -59,7 +58,7 @@ public class DuicConfigBeanFactoryPostProcessor implements BeanDefinitionRegistr
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
+        return Ordered.LOWEST_PRECEDENCE;
     }
 
     private void postProcess(ConfigurableListableBeanFactory beanFactory) {
@@ -67,17 +66,14 @@ public class DuicConfigBeanFactoryPostProcessor implements BeanDefinitionRegistr
         ConfigUtils.setDefaultConfig(config);
 
         // 注册 Spring 属性配置
-        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
-        MutablePropertySources mutablePropertySources = new MutablePropertySources();
-        mutablePropertySources.addLast(new PropertySource<String>(ConfigUtils.class.getName()) {
+        ConfigurableEnvironment env = beanFactory.getBean(ConfigurableEnvironment.class);
+        env.getPropertySources().addFirst(new PropertySource<String>(ConfigUtils.class.getName()) {
 
             @Override
             public String getProperty(String name) {
                 return ConfigUtils.getString(name, null);
             }
         });
-        configurer.setPropertySources(mutablePropertySources);
-        configurer.postProcessBeanFactory(beanFactory);
     }
 
     private void reloadValueAnnotation() {
