@@ -29,7 +29,7 @@ public class Config {
     private boolean failFast;
     private Set<DuicListener> listeners;
 
-    private Map<String, Object> properties;
+    private Map<String, Object> properties = Collections.emptyMap();
 
     private Config(String baseUri, String name, String profile, String configToken, ReloadPlot plot, boolean failFast,
                    Set<DuicListener> listeners) {
