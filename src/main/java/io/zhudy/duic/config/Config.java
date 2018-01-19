@@ -10,7 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 /**
  * 配置获取实现.
@@ -123,7 +122,7 @@ public class Config {
                         loadProperties();
                     }
                 } catch (Exception e) {
-                    log.warn("获取配置状态错误 [{}] {}", state, e.getMessage());
+                    log.warn("获取配置状态错误 [{}] {}", stateUrl, e.getMessage());
                 }
             }
         }, plot.period, plot.period, plot.unit);
