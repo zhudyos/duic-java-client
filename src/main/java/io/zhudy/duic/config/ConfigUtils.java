@@ -20,7 +20,7 @@ public final class ConfigUtils {
      * @return boolean
      */
     public static boolean containsKey(String key) {
-        return get(key, null) != null;
+        return getOrNull(key) != null;
     }
 
     /**
@@ -34,7 +34,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Boolean.parseBoolean((String) v);
             return (boolean) v;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new WrongConfigValueException(key, v, e);
         }
     }
@@ -52,7 +52,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Boolean.parseBoolean((String) v);
             return (boolean) v;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -68,7 +68,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.valueOf((String) v).intValue();
             return ((Number) v).intValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new WrongConfigValueException(key, v, e);
         }
     }
@@ -86,7 +86,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.valueOf((String) v).intValue();
             return ((Number) v).intValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -102,7 +102,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.valueOf((String) v).longValue();
             return ((Number) v).longValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new WrongConfigValueException(key, v, e);
         }
     }
@@ -120,7 +120,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.valueOf((String) v).longValue();
             return ((Number) v).longValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -136,7 +136,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.valueOf((String) v).floatValue();
             return ((Number) v).floatValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new WrongConfigValueException(key, v, e);
         }
     }
@@ -154,7 +154,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.valueOf((String) v).floatValue();
             return ((Number) v).floatValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -170,7 +170,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.parseDouble((String) v);
             return ((Number) v).doubleValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new WrongConfigValueException(key, v, e);
         }
     }
@@ -189,7 +189,7 @@ public final class ConfigUtils {
         try {
             if (v instanceof String) return Double.parseDouble((String) v);
             return ((Number) v).doubleValue();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -204,7 +204,7 @@ public final class ConfigUtils {
         Object v = get(key);
         try {
             return v.toString();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             throw new WrongConfigValueException(key, v, e);
         }
     }
@@ -220,7 +220,7 @@ public final class ConfigUtils {
         Object v = get(key, defaultValue);
         try {
             return v.toString();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return defaultValue;
         }
     }
@@ -233,17 +233,11 @@ public final class ConfigUtils {
      * @throws ConfigNotFoundException 配置不存在
      */
     public static Object get(String key) throws ConfigNotFoundException {
-        return getConfig().get(key);
-    }
-
-    /**
-     * 返回指定配置名称的参数值, 如果不存在则返回{@code null}.
-     *
-     * @param key 配置名称
-     * @return Object
-     */
-    public static Object getOrNull(String key) {
-        return getConfig().getOrNull(key);
+        Object o = getOrNull(key);
+        if (o == null) {
+            throw new ConfigNotFoundException(key);
+        }
+        return o;
     }
 
     /**
@@ -254,11 +248,24 @@ public final class ConfigUtils {
      * @return Object
      */
     public static Object get(String key, Object defaultValue) {
-        Object v = getConfig().getOrNull(key);
+        Object v = getOrNull(key);
         if (v == null) {
             return defaultValue;
         }
         return v;
+    }
+
+    /**
+     * 返回指定配置名称的参数值, 如果不存在则返回{@code null}.
+     *
+     * @param key 配置名称
+     * @return Object
+     */
+    public static Object getOrNull(String key) {
+        if (config == null) {
+            return null;
+        }
+        return config.getOrNull(key);
     }
 
     /**
@@ -268,12 +275,5 @@ public final class ConfigUtils {
      */
     public static void setDefaultConfig(Config config) {
         ConfigUtils.config = config;
-    }
-
-    private static Config getConfig() {
-        if (ConfigUtils.config == null) {
-            throw new DuicClientException("未设置默认的 Config 实例, 请先调用 ConfigUtils.setDefaultConfig(Config)");
-        }
-        return ConfigUtils.config;
     }
 }
