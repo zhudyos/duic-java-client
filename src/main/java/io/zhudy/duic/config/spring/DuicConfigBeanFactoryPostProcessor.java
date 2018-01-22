@@ -5,10 +5,11 @@ import io.zhudy.duic.config.ConfigUtils;
 import io.zhudy.duic.config.DuicListener;
 import io.zhudy.duic.config.ReloadPlot;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -23,10 +24,11 @@ import java.util.Objects;
  *
  * @author Kevin Zou (kevinz@weghst.com)
  */
-public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, BeanFactoryPostProcessor {
+public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, ApplicationContextAware, BeanFactoryPostProcessor {
 
-    private ConfigurableListableBeanFactory beanFactory;
     private ConfigurableEnvironment environment;
+    private ConfigurableApplicationContext applicationContext;
+    private ConfigurableListableBeanFactory beanFactory;
 
     private String baseUri;
     private String name;
@@ -41,6 +43,15 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, Bea
     @Override
     public void setEnvironment(Environment environment) {
         this.environment = (ConfigurableEnvironment) environment;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        ConfigurableApplicationContext ac = (ConfigurableApplicationContext) applicationContext;
+        ReloadConfigApplicationListener listener = applicationContext.getAutowireCapableBeanFactory()
+                .createBean(ReloadConfigApplicationListener.class);
+        ac.addApplicationListener(listener);
+        this.applicationContext = ac;
     }
 
     @Override
@@ -63,15 +74,6 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, Bea
         });
     }
 
-    private void reloadValueAnnotation() {
-        AutowiredAnnotationBeanPostProcessor bpp = new AutowiredAnnotationBeanPostProcessor();
-        bpp.setAutowiredAnnotationType(Value.class);
-        bpp.setBeanFactory(beanFactory);
-        for (String name : beanFactory.getBeanDefinitionNames()) {
-            bpp.processInjection(beanFactory.getBean(name));
-        }
-    }
-
     private Config buildConfig() {
         Config.Builder builder = new Config.Builder()
                 .baseUri(baseUri)
@@ -92,7 +94,7 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, Bea
             @Override
             public void handle(String state, Map<String, Object> properties) {
                 if (oldState != null && !Objects.equals(oldState, state)) {
-                    reloadValueAnnotation();
+                    applicationContext.publishEvent(new ReloadConfigEvent(state));
                 }
                 oldState = state;
             }
@@ -155,4 +157,5 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, Bea
     public void setListeners(List<DuicListener> listeners) {
         this.listeners = listeners;
     }
+
 }
