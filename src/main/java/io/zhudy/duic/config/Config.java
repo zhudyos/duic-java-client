@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * 配置获取实现.
@@ -20,6 +21,7 @@ public class Config {
 
     private static final Logger log = LoggerFactory.getLogger(Config.class);
     private static final PropertyPlaceholderHelper PLACEHOLDER_HELPER = new PropertyPlaceholderHelper("${", "}", ":", true);
+    private static final Pattern DOT_REGEX = Pattern.compile("\\.");
 
     private String stateUrl;
     private String propsUrl;
@@ -54,30 +56,31 @@ public class Config {
         loadProperties();
     }
 
-    public Object get(String key) throws ConfigNotFoundException {
-        Object v = getOrNull(key);
-        if (v == null) {
-            throw new ConfigNotFoundException(key);
-        }
-        return v;
-    }
-
-    public Object getOrNull(String key) {
+    public Object get(String key) {
         if (key == null || key.isEmpty()) {
             throw new ConfigNotFoundException("config key 不能为 null");
         }
+        String[] segs = DOT_REGEX.split(key);
 
-        Object p = properties.get(key);
+        Object p = null;
+        for (String k : segs) {
+            if (p == null) {
+                p = properties.get(k);
+            } else {
+                p = ((Map) p).get(k);
+            }
+        }
+
         if (p instanceof String) {
             return PLACEHOLDER_HELPER.replacePlaceholders((String) p, new PropertyPlaceholderHelper.PlaceholderResolver() {
                 @Override
                 public String resolvePlaceholder(String placeholderName) {
-                    Object o = getOrNull(placeholderName);
+                    Object o = get(placeholderName);
                     if (o == null) {
                         o = System.getProperty(placeholderName);
                         if (o == null) return System.getenv(placeholderName);
                     }
-                    return o.toString();
+                    return o != null ? o.toString() : null;
                 }
             });
         }
@@ -88,7 +91,7 @@ public class Config {
         try {
             state = getState();
             long b = System.currentTimeMillis();
-            properties = getFlattenedMap(DuicClientUtils.getProperties(propsUrl, configToken));
+            properties = DuicClientUtils.getProperties(propsUrl, configToken);
             log.info("加载 DuiC 配置 [{},{}ms]", propsUrl, System.currentTimeMillis() - b);
 
             for (DuicListener listener : listeners) {
@@ -126,44 +129,6 @@ public class Config {
                 }
             }
         }, plot.period, plot.period, plot.unit);
-    }
-
-    protected final Map<String, Object> getFlattenedMap(Map<String, Object> source) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        buildFlattenedMap(result, source, null);
-        return result;
-    }
-
-    private void buildFlattenedMap(Map<String, Object> result, Map<String, Object> source, String path) {
-        for (Map.Entry<String, Object> entry : source.entrySet()) {
-            String key = entry.getKey();
-            if (path != null && !path.isEmpty()) {
-                if (key.startsWith("[")) {
-                    key = path + key;
-                } else {
-                    key = path + '.' + key;
-                }
-            }
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                result.put(key, value);
-            } else if (value instanceof Map) {
-                // Need a compound key
-                @SuppressWarnings("unchecked")
-                Map<String, Object> map = (Map<String, Object>) value;
-                buildFlattenedMap(result, map, key);
-            } else if (value instanceof Collection) {
-                // Need a compound key
-                @SuppressWarnings("unchecked")
-                Collection<Object> collection = (Collection<Object>) value;
-                int count = 0;
-                for (Object object : collection) {
-                    buildFlattenedMap(result, Collections.singletonMap("[" + (count++) + "]", object), key);
-                }
-            } else {
-                result.put(key, (value != null ? value : ""));
-            }
-        }
     }
 
     private String getState() {

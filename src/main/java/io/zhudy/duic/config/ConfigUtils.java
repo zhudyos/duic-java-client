@@ -1,5 +1,8 @@
 package io.zhudy.duic.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 配置工具包.
  *
@@ -7,6 +10,7 @@ package io.zhudy.duic.config;
  */
 public final class ConfigUtils {
 
+    private static final Logger log = LoggerFactory.getLogger(ConfigUtils.class);
     private static Config config;
 
     private ConfigUtils() {
@@ -263,9 +267,10 @@ public final class ConfigUtils {
      */
     public static Object getOrNull(String key) {
         if (config == null) {
+            log.warn("未设置 Config 实例请先执行 ConfigUtils.setDefaultConfig(Config) 设置配置实例");
             return null;
         }
-        return config.getOrNull(key);
+        return config.get(key);
     }
 
     /**

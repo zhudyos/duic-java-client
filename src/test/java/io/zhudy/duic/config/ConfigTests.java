@@ -24,7 +24,7 @@ public class ConfigTests {
     }
 
     @Test
-    public void getOrNull() {
+    public void get() {
         Config config = new Config.Builder()
                 .baseUri(baseUri)
                 .name("hello")
@@ -58,10 +58,7 @@ public class ConfigTests {
         assertEquals(ConfigUtils.getString("a.ref_string"), "ref_123456");
         assertEquals(ConfigUtils.getString("a.null_string", "null"), "null");
 
-        assertEquals(ConfigUtils.getString("a.object.a"), "a");
-        assertEquals(ConfigUtils.getString("a.object.b"), "b");
-
-        assertEquals(ConfigUtils.getString("a.list[0]"), "a");
-        assertEquals(ConfigUtils.getString("a.list[1]"), "b");
+        assertTrue(ConfigUtils.get("a.object") instanceof Map);
+        assertTrue(ConfigUtils.get("a.list") instanceof List);
     }
 }
