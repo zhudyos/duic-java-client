@@ -32,6 +32,10 @@ public class TestDispatcher extends Dispatcher {
             return new MockResponse().setResponseCode(200).setBody("{ \"state\": \"" + seq.intValue() + "\" }");
         }
 
+        if (p.equals("/api/v1/apps/watches/hello/world")) {
+            return new MockResponse().setResponseCode(200).setBody("{ \"state\": \"2\" }");
+        }
+
         if (p.equals("/api/v1/apps/hello/world")) {
             if (seq.intValue() >= 2) {
                 return new MockResponse().setResponseCode(200)

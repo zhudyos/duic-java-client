@@ -10,9 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Kevin Zou (kevinz@weghst.com)
@@ -41,7 +40,7 @@ public class SpringTests {
         processor.setBaseUri(baseUri);
         processor.setName("hello");
         processor.setProfile("world");
-        processor.setReloadPlot(new ReloadPlot(1, TimeUnit.SECONDS));
+        processor.setWatchEnabled(true);
         return processor;
     }
 
@@ -54,7 +53,6 @@ public class SpringTests {
 
     @Test
     public void execute2() {
-        assertFalse(aBoolean);
         assertEquals(aBoolean, aRefBoolean);
     }
 }

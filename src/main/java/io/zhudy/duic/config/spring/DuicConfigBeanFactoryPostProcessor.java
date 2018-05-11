@@ -3,7 +3,6 @@ package io.zhudy.duic.config.spring;
 import io.zhudy.duic.config.Config;
 import io.zhudy.duic.config.ConfigUtils;
 import io.zhudy.duic.config.DuicListener;
-import io.zhudy.duic.config.ReloadPlot;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -34,8 +33,8 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, App
     private String name;
     private String profile;
     private String configToken;
+    private boolean watchEnabled;
     private boolean failFast;
-    private ReloadPlot reloadPlot;
     private List<DuicListener> listeners;
 
     private String oldState;
@@ -80,10 +79,9 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, App
                 .name(name)
                 .profile(profile)
                 .configToken(configToken)
+                .watchEnabled(watchEnabled)
                 .failFast(failFast);
-        if (reloadPlot != null) {
-            builder.reloadPlot(reloadPlot);
-        }
+
         if (listeners != null && !listeners.isEmpty()) {
             for (DuicListener listener : listeners) {
                 builder.listener(listener);
@@ -134,20 +132,20 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, App
         this.configToken = configToken;
     }
 
+    public boolean isWatchEnabled() {
+        return watchEnabled;
+    }
+
+    public void setWatchEnabled(boolean watchEnabled) {
+        this.watchEnabled = watchEnabled;
+    }
+
     public boolean isFailFast() {
         return failFast;
     }
 
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
-    }
-
-    public ReloadPlot getReloadPlot() {
-        return reloadPlot;
-    }
-
-    public void setReloadPlot(ReloadPlot reloadPlot) {
-        this.reloadPlot = reloadPlot;
     }
 
     public List<DuicListener> getListeners() {

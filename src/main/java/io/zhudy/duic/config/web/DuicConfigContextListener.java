@@ -1,6 +1,9 @@
 package io.zhudy.duic.config.web;
 
-import io.zhudy.duic.config.*;
+import io.zhudy.duic.config.Config;
+import io.zhudy.duic.config.ConfigUtils;
+import io.zhudy.duic.config.DuicClientException;
+import io.zhudy.duic.config.DuicListener;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -10,7 +13,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Kevin Zou (kevinz@weghst.com)
@@ -29,8 +31,7 @@ public class DuicConfigContextListener implements ServletContextListener {
         String name = props.getProperty("duic.name");
         String profile = props.getProperty("duic.profile");
         String configToken = props.getProperty("duic.config.token");
-        String period = props.getProperty("duic.reload.period");
-        String unit = props.getProperty("duic.reload.unit");
+        String watchEnabled = props.getProperty("duic.watch.enabled");
         String failFast = props.getProperty("duic.fail.fast");
         String listeners = props.getProperty("duic.listeners");
 
@@ -38,17 +39,10 @@ public class DuicConfigContextListener implements ServletContextListener {
                 .baseUri(baseUri)
                 .name(name)
                 .profile(profile)
-                .configToken(configToken);
-        if (period != null && !period.isEmpty()) {
-            TimeUnit tu = TimeUnit.SECONDS;
-            if (unit != null && !unit.isEmpty()) {
-                tu = TimeUnit.valueOf(unit);
-            }
-            builder.reloadPlot(new ReloadPlot(Integer.parseInt(period), tu));
-        }
-        if (failFast != null && !failFast.isEmpty()) {
-            builder.failFast(Boolean.parseBoolean(failFast));
-        }
+                .configToken(configToken)
+                .watchEnabled("true".equalsIgnoreCase(watchEnabled))
+                .failFast("true".equalsIgnoreCase(failFast));
+
         if (listeners != null && !listeners.isEmpty()) {
             for (String c : listeners.split(",")) {
                 try {

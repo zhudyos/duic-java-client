@@ -1,10 +1,7 @@
 package io.zhudy.duic.config;
 
 import io.zhudy.duic.config.internal.JsonParserFactory;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,10 +22,10 @@ public final class DuicClientUtils {
 
     static {
         httpClient = new OkHttpClient.Builder()
-                .connectionPool(new ConnectionPool(1, 5, TimeUnit.SECONDS))
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .readTimeout(5, TimeUnit.SECONDS)
-                .writeTimeout(5, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool(1, 5, TimeUnit.MINUTES))
+                .connectTimeout(3, TimeUnit.SECONDS)
+                .writeTimeout(3, TimeUnit.SECONDS)
+                .readTimeout(5, TimeUnit.MINUTES)
                 .build();
     }
 
@@ -36,6 +33,9 @@ public final class DuicClientUtils {
      * 设置 {@link OkHttpClient} 实例.
      */
     public static void setHttpClient(OkHttpClient httpClient) {
+        if (httpClient == null) {
+            throw new IllegalArgumentException("OkHttpClient 不能为空");
+        }
         DuicClientUtils.httpClient = httpClient;
     }
 
@@ -62,6 +62,19 @@ public final class DuicClientUtils {
     }
 
     /**
+     * 监控配置状态。
+     *
+     * @param url         https://duic.zhudy.io/api/v1/apps/watches/{name}/{profile}
+     * @param configToken 配置访问令牌多个采用英文逗号分隔
+     * @return 配置状态
+     */
+    public static String watchState(String url, String state, String configToken) {
+        HttpUrl hu = HttpUrl.parse(url).newBuilder().addQueryParameter("state", state).build();
+        Map<String, Object> m = get(hu, configToken);
+        return (String) m.get("state");
+    }
+
+    /**
      * 获取配置.
      *
      * @param url https://duic.zhudy.io/api/v1/apps/{name}/{profile}
@@ -83,6 +96,10 @@ public final class DuicClientUtils {
     }
 
     private static Map<String, Object> get(String url, String configToken) {
+        return get(HttpUrl.parse(url), configToken);
+    }
+
+    private static Map<String, Object> get(HttpUrl url, String configToken) {
         Request.Builder reqBuilder = new Request.Builder();
         reqBuilder.get().url(url);
         if (configToken != null && !configToken.isEmpty()) {

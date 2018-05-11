@@ -6,10 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -25,16 +21,21 @@ public class Config {
 
     private String stateUrl;
     private String propsUrl;
+    private String watchStateUrl;
     private String configToken;
     private String state;
+
+    private boolean watchEnabled;
     private boolean failFast;
+
     private Set<DuicListener> listeners;
 
     private Map<String, Object> properties = Collections.emptyMap();
 
-    private Config(String baseUri, String name, String profile, String configToken, ReloadPlot plot, boolean failFast,
+    private Config(String baseUri, String name, String profile, String configToken, boolean watchEnabled, boolean failFast,
                    Set<DuicListener> listeners) {
         this.configToken = configToken;
+        this.watchEnabled = watchEnabled;
         this.failFast = failFast;
         this.listeners = listeners;
 
@@ -50,9 +51,13 @@ public class Config {
                 .addPathSegment(profile)
                 .build()
                 .toString();
-        if (plot != null) {
-            watch(plot);
-        }
+        watchStateUrl = HttpUrl.parse(baseUri).newBuilder()
+                .addPathSegments("apps/watches")
+                .addPathSegment(name)
+                .addPathSegment(profile)
+                .build()
+                .toString();
+
         loadProperties();
     }
 
@@ -94,6 +99,9 @@ public class Config {
             properties = DuicClientUtils.getProperties(propsUrl, configToken);
             log.info("加载 DuiC 配置 [{},{}ms]", propsUrl, System.currentTimeMillis() - b);
 
+            if (watchEnabled) {
+                watch();
+            }
             for (DuicListener listener : listeners) {
                 listener.handle(state, properties);
             }
@@ -106,29 +114,27 @@ public class Config {
         }
     }
 
-    private void watch(ReloadPlot plot) {
-        ScheduledExecutorService ses = Executors.newScheduledThreadPool(1, new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "duic-reload-config");
-                t.setDaemon(true);
-                return t;
-            }
-        });
-
-        ses.scheduleAtFixedRate(new Runnable() {
+    private void watch() {
+        Thread t = new Thread("duic-watch-state") {
             @Override
             public void run() {
-                try {
-                    String newState = getState();
-                    if (!Objects.equals(state, newState)) {
-                        loadProperties();
+                for (; ; ) {
+                    try {
+                        String newState = DuicClientUtils.watchState(watchStateUrl, state, configToken);
+                        if (!Objects.equals(state, newState)) {
+                            loadProperties();
+                        }
+                    } catch (DuicClientException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        // ignore
+                        log.warn("获取配置状态错误 [{}] {}", stateUrl, e.getMessage());
                     }
-                } catch (Exception e) {
-                    log.warn("获取配置状态错误 [{}] {}", stateUrl, e.getMessage());
                 }
             }
-        }, plot.period, plot.period, plot.unit);
+        };
+        t.setDaemon(true);
+        t.start();
     }
 
     private String getState() {
@@ -141,7 +147,7 @@ public class Config {
         private String name;
         private String profile;
         private String configToken;
-        private ReloadPlot reloadPlot = new ReloadPlot(30, TimeUnit.SECONDS);
+        private boolean watchEnabled = false;
         private boolean failFast;
         private Set<DuicListener> listeners = new HashSet<>();
 
@@ -186,12 +192,10 @@ public class Config {
         }
 
         /**
-         * 配置重载策略
-         *
-         * @param reloadPlot 重载策略
+         * 启用监控配置变化。
          */
-        public Builder reloadPlot(ReloadPlot reloadPlot) {
-            this.reloadPlot = reloadPlot;
+        public Builder watchEnabled(boolean watchEnabled) {
+            this.watchEnabled = watchEnabled;
             return this;
         }
 
@@ -219,7 +223,7 @@ public class Config {
          * 返回配置实例。
          */
         public Config build() {
-            return new Config(baseUri, name, profile, configToken, reloadPlot, failFast, listeners);
+            return new Config(baseUri, name, profile, configToken, watchEnabled, failFast, listeners);
         }
     }
 }
