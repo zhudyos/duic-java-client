@@ -194,15 +194,29 @@ public class Config {
         /**
          * 启用监控配置变化。
          */
+        public Builder enableWatch() {
+            this.watchEnabled = true;
+            return this;
+        }
+
+        /**
+         * 启用监控配置变化。
+         */
         public Builder watchEnabled(boolean watchEnabled) {
             this.watchEnabled = watchEnabled;
             return this;
         }
 
         /**
-         * 当配置获取失败时, 直接抛出异常, 快速失败
-         *
-         * @param failFast 快速失败策略
+         * 当配置获取失败时, 直接抛出异常, 快速失败。
+         */
+        public Builder enableFailFast() {
+            this.failFast = true;
+            return this;
+        }
+
+        /**
+         * 当配置获取失败时, 直接抛出异常, 快速失败。
          */
         public Builder failFast(boolean failFast) {
             this.failFast = failFast;

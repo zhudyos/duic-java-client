@@ -27,7 +27,6 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, App
 
     private ConfigurableEnvironment environment;
     private ConfigurableApplicationContext applicationContext;
-    private ConfigurableListableBeanFactory beanFactory;
 
     private String baseUri;
     private String name;
@@ -55,7 +54,6 @@ public class DuicConfigBeanFactoryPostProcessor implements EnvironmentAware, App
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
         postProcess();
     }
 
