@@ -7,12 +7,14 @@ buildscript {
 
 plugins {
     id "net.researchgate.release" version "2.6.0"
+    id "com.github.hierynomus.license" version "0.14.0"
 }
 
 apply plugin: "java"
 apply plugin: "jacoco"
 apply plugin: "maven"
 apply plugin: 'signing'
+apply plugin: "com.github.hierynomus.license"
 
 group "io.zhudy.duic"
 
@@ -40,6 +42,14 @@ dependencies {
     testCompile "com.squareup.okhttp3:mockwebserver:3.9.1"
     testCompile "org.springframework:spring-context:4.3.13.RELEASE"
     testCompile "org.springframework:spring-test:4.3.13.RELEASE"
+}
+
+license {
+    headerURI = com.hierynomus.gradle.license.LicenseBasePlugin.class.getClassLoader().getResource("headers/Apache-2.0").toURI()
+    ext {
+        year = "2017-${Calendar.getInstance().get(Calendar.YEAR)}"
+        author = "the original author or authors"
+    }
 }
 
 jacoco {
