@@ -51,6 +51,9 @@ license {
         author = "the original author or authors"
     }
 }
+tasks.withType(com.hierynomus.gradle.license.tasks.LicenseCheck) {
+    it.enabled = false
+}
 
 jacoco {
     toolVersion = '0.7.9'
