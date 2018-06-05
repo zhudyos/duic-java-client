@@ -1,9 +1,11 @@
-https://github.com/zhudyos/duic[DuiC] 统一配置管理 Java/Android 工具包
+https://github.com/zhudyos/duic[duic] 配置中心 Java/Android 工具包。
 
-=== 功能
-. 加载 DuiC 配置
-. 定期检查 DuiC 配置更新
-. 提供 `ConfigUtils` 获取配置 API
+= 特性
+. 支持 Java、Servlet、Spring、Android 等应用配置管理。
+. 支持配置热加载。
+. 支持配置无延迟更新。
+. 支持 `@Value` 注入配置。
+. 提供 `ConfigUtils` API 静态方法获取配置。
 
 === 使用
 maven::
@@ -33,28 +35,28 @@ testCompile "com.fasterxml.jackson.core:jackson-databind:x.x.x"
 ====
 
 === ConfigUtils API
-. ConfigUtils.containsKey(key) 判断配置是否存在
-. ConfigUtils.getBoolean(key) 获取一个 `boolean` 配置
-. ConfigUtils.getBoolean(key, defaultValue) 获取一个 `boolean` 配置不存在则返回默认值
-. ConfigUtils.getInt(key) 获取一个 `int` 配置
-. ConfigUtils.getInt(key, defaultValue) 获取一个 `int` 配置不存在则返回默认值
-. ConfigUtils.getLong(key) 获取一个 `long` 配置
-. ConfigUtils.getLong(key, defaultValue) 获取一个 `long` 配置不存在则返回默认值
-. ConfigUtils.getFloat(key) 获取一个 `float` 配置
-. ConfigUtils.getFloat(key, defaultValue) 获取一个 `float` 配置不存在则返回默认值
-. ConfigUtils.getDouble(key) 获取一个 `double` 配置
-. ConfigUtils.getDouble(key, defaultValue) 获取一个 `double` 配置不存在则返回默认值
-. ConfigUtils.getString(key) 获取一个 `String` 配置
-. ConfigUtils.getString(key, defaultValue) 获取一个 `String` 配置不存在则返回默认值
-. ConfigUtils.get(key) 获取一个 `Object` 配置
-. ConfigUtils.get(key, defaultValue) 获取一个 `Object` 配置不存在则返回默认值
-. ConfigUtils.getOrNull(key) 获取一个 `Object` 配置不存在则返回 `null`
+. ConfigUtils.containsKey(key) 判断配置是否存在。
+. ConfigUtils.getBoolean(key) 获取一个 `boolean` 配置。
+. ConfigUtils.getBoolean(key, defaultValue) 获取一个 `boolean` 配置不存在则返回默认值。
+. ConfigUtils.getInt(key) 获取一个 `int` 配置。
+. ConfigUtils.getInt(key, defaultValue) 获取一个 `int` 配置不存在则返回默认值。
+. ConfigUtils.getLong(key) 获取一个 `long` 配置。
+. ConfigUtils.getLong(key, defaultValue) 获取一个 `long` 配置不存在则返回默认值。
+. ConfigUtils.getFloat(key) 获取一个 `float` 配置。
+. ConfigUtils.getFloat(key, defaultValue) 获取一个 `float` 配置不存在则返回默认值。
+. ConfigUtils.getDouble(key) 获取一个 `double` 配置。
+. ConfigUtils.getDouble(key, defaultValue) 获取一个 `double` 配置不存在则返回默认值。
+. ConfigUtils.getString(key) 获取一个 `String` 配置。
+. ConfigUtils.getString(key, defaultValue) 获取一个 `String` 配置不存在则返回默认值。
+. ConfigUtils.get(key) 获取一个 `Object` 配置。
+. ConfigUtils.get(key, defaultValue) 获取一个 `Object` 配置不存在则返回默认值。
+. ConfigUtils.getOrNull(key) 获取一个 `Object` 配置不存在则返回 `null`。
 
 === DuicClientUtils API
-. DuicClientUtils.getState(url) 获取服务器配置状态
-. DuicClientUtils.getState(url, configToken) 获取服务器配置状态
-. DuicClientUtils.getProperties(url) 获取服务器配置
-. DuicClientUtils.getProperties(url, configToken) 获取服务器配置
+. DuicClientUtils.getState(url) 获取服务器配置状态。
+. DuicClientUtils.getState(url, configToken) 获取服务器配置状态。
+. DuicClientUtils.getProperties(url) 获取服务器配置。
+. DuicClientUtils.getProperties(url, configToken) 获取服务器配置。
 
 === Java/Android 使用
 创建 `Config` 实例并将设置为 `ConfigUtils` 的默认配置
@@ -63,10 +65,14 @@ Config config = new Config.Builder()
         .baseUri("https://duic.zhudy.io/api/v1")
         .name("hello")
         .profile("world")
-        // .configToken("...")
-        // .reloadPlot(new ReloadPlot(10, TimeUnit.SECONDS)) // 重载
-        // .failFast(true) // 快速失败
-        // .listener() // 配置加载监听
+        // 访问令牌（可选）
+        .configToken("token1,token2")   
+        // 监控服务器配置变化，当配置发生改变时自动重载（可选）
+        .enableWatch()        
+        // 启用快速失败策略，当获取配置失败时，直接抛出异常（可选）
+        .enableFailFast()  
+        // 配置加载监听（可选）
+        .listener()           
         .build();
 ConfigUtils.setDefaultConfig(config);
 ```
@@ -91,8 +97,7 @@ duic.base.uri=https://duic.zhudy.io/api/v1
 duic.name=hello
 duic.profile=world
 duic.config.token=
-duic.reload.period=10
-duic.reload.unit=SECONDS
+duic.watch.enabled=true
 duic.fail.fast=false
 # 多个 DuicListener 采用英文逗号(,)分隔
 duic.listeners=xx.MyDuicListener
@@ -114,7 +119,7 @@ public static DuicConfigBeanFactoryPostProcessor duicConfigBeanFactoryPostProces
 或者在 `xml` 中声明
 +
 ```
-<bean id="duicConfigBeanFactoryPostProcessor" class="io.zhudy.duic.config.spring.duicConfigBeanFactoryPostProcessor">
+<bean id="duicConfigBeanFactoryPostProcessor" class="io.zhudy.duic.config.spring.DuicConfigBeanFactoryPostProcessor">
   <property name="baseUri" value="https://duic.zhudy.io/api/v1"/>
   <property name="name" value="hello"/>
   <property name="profile" value="world"/>
@@ -132,5 +137,5 @@ public class Example {
 ```
 [TIP]
 ====
-`@Value` 注入的属性可热更新，当配置变化时会重新在实例中注入新的配置属性
+`@Value` 注入的属性可热更新，当配置变化时会重新在实例中注入新的配置属性。
 ====
