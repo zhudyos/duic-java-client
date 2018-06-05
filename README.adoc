@@ -7,7 +7,7 @@ https://github.com/zhudyos/duic[duic] 配置中心 Java/Android 工具包。
 . 支持 `@Value` 注入配置。
 . 提供 `ConfigUtils` API 静态方法获取配置。
 
-=== 使用
+= 使用
 maven::
 [xml]
 ----
