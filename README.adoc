@@ -14,14 +14,14 @@ maven::
 <dependency>
   <groupId>io.zhudy.duic</groupId>
   <artifactId>duic-java-client</artifactId>
-  <version>1.2.2</version>
+  <version>1.3.0</version>
 </dependency>
 ----
 
 gradle::
 [groovy]
 ----
-compile "io.zhudy.duic:duic-java-client:1.2.2"
+compile "io.zhudy.duic:duic-java-client:1.3.0"
 ----
 
 [IMPORTANT]
