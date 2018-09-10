@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -139,11 +140,13 @@ public class Config {
                         if (!Objects.equals(state, newState)) {
                             loadProperties();
                         }
-                    } catch (DuicClientException e) {
-                        throw e;
                     } catch (Exception e) {
-                        // ignore
-                        log.warn("获取配置状态错误 [{}] {}", stateUrl, e.getMessage());
+                        log.warn("获取配置状态错误 [{}]", stateUrl, e);
+
+                        try {
+                            TimeUnit.SECONDS.sleep(1);
+                        } catch (InterruptedException e1) {
+                        }
                     }
                 }
             }
