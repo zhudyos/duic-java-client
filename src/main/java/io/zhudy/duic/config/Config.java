@@ -41,7 +41,6 @@ public class Config {
     private String configToken;
     private String state;
 
-    private boolean watchEnabled;
     private boolean failFast;
 
     private Set<DuicListener> listeners;
@@ -51,7 +50,6 @@ public class Config {
     private Config(String baseUri, String name, String profile, String configToken, boolean watchEnabled, boolean failFast,
                    Set<DuicListener> listeners) {
         this.configToken = configToken;
-        this.watchEnabled = watchEnabled;
         this.failFast = failFast;
         this.listeners = listeners;
 
@@ -75,6 +73,9 @@ public class Config {
                 .toString();
 
         loadProperties();
+        if (watchEnabled) {
+            watch();
+        }
     }
 
     public Object get(String key) {
@@ -114,10 +115,6 @@ public class Config {
             long b = System.currentTimeMillis();
             properties = DuicClientUtils.getProperties(propsUrl, configToken);
             log.info("加载 DuiC 配置 [{},{}ms]", propsUrl, System.currentTimeMillis() - b);
-
-            if (watchEnabled) {
-                watch();
-            }
             for (DuicListener listener : listeners) {
                 listener.handle(state, properties);
             }
