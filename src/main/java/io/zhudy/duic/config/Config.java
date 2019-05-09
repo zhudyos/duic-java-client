@@ -84,12 +84,16 @@ public class Config {
         }
         String[] segs = DOT_REGEX.split(key);
 
-        Object p = null;
-        for (String k : segs) {
-            if (p == null) {
-                p = properties.get(k);
+        Object p = properties.get(segs[0]);
+        if (p == null) {
+            return null;
+        }
+
+        for (int i = 1; i < segs.length; i++) {
+            if (p instanceof Map) {
+                p = ((Map) p).get(segs[i]);
             } else {
-                p = ((Map) p).get(k);
+                return null;
             }
         }
 
