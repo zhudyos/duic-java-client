@@ -6,13 +6,14 @@ buildscript {
 }
 
 plugins {
+    id "java-library"
     id "net.researchgate.release" version "2.6.0"
     id "com.github.hierynomus.license" version "0.14.0"
 }
 
 apply plugin: "java"
 apply plugin: "jacoco"
-apply plugin: "maven"
+apply plugin: "maven-publish"
 apply plugin: 'signing'
 apply plugin: "com.github.hierynomus.license"
 
@@ -33,15 +34,15 @@ dependencies {
     compileOnly "com.fasterxml.jackson.core:jackson-databind:2.9.3"
     compileOnly "org.springframework:spring-context:4.3.13.RELEASE"
 
-    compile "org.slf4j:slf4j-api:1.7.25"
-    compile "com.squareup.okhttp3:okhttp:3.9.1"
+    api("org.slf4j:slf4j-api:1.7.25")
+    api("com.squareup.okhttp3:okhttp:3.9.1")
 
-    testCompile "org.mockito:mockito-core:2.13.0"
-    testCompile "com.fasterxml.jackson.core:jackson-databind:2.9.3"
+    testImplementation("org.mockito:mockito-core:2.13.0")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.3")
     // testCompile "com.google.code.gson:gson:2.8.2"
-    testCompile "com.squareup.okhttp3:mockwebserver:3.9.1"
-    testCompile "org.springframework:spring-context:4.3.13.RELEASE"
-    testCompile "org.springframework:spring-test:4.3.13.RELEASE"
+    testImplementation("com.squareup.okhttp3:mockwebserver:3.9.1")
+    testImplementation("org.springframework:spring-context:4.3.13.RELEASE")
+    testImplementation("org.springframework:spring-test:4.3.13.RELEASE")
 }
 
 license {
@@ -89,7 +90,7 @@ if (project.hasProperty("signing.keyId")) {
     uploadArchives {
         repositories {
             mavenDeployer {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+                beforeDeployment { deployment -> signing.signPom(deployment) }
 
                 repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
                     authentication(userName: System.env.OSSRH_USERNAME, password: System.env.OSSRH_PASSWORD)
