@@ -115,9 +115,10 @@ public class Config {
 
     private void loadProperties() {
         try {
-            state = getState();
             long b = System.currentTimeMillis();
-            properties = DuicClientUtils.getProperties(propsUrl, configToken);
+            ConfigResponse response = DuicClientUtils.getProperties(propsUrl, configToken);
+            state = response.getState();
+            properties = response.getProperties();
             log.info("加载 DuiC 配置 [{},{}ms]", propsUrl, System.currentTimeMillis() - b);
             for (DuicListener listener : listeners) {
                 listener.handle(state, properties);

@@ -72,8 +72,8 @@ public final class DuicClientUtils {
      * @return 配置状态
      */
     public static String getState(String url, String configToken) {
-        Map<String, Object> m = get(url, configToken);
-        return (String) m.get("state");
+        ConfigResponse response = get(url, configToken);
+        return (String) response.getProperties().get("state");
     }
 
     /**
@@ -85,8 +85,8 @@ public final class DuicClientUtils {
      */
     public static String watchState(String url, String state, String configToken) {
         HttpUrl hu = HttpUrl.parse(url).newBuilder().addQueryParameter("state", state).build();
-        Map<String, Object> m = get(hu, configToken);
-        return (String) m.get("state");
+        ConfigResponse response = get(hu, configToken);
+        return (String) response.getProperties().get("state");
     }
 
     /**
@@ -95,7 +95,7 @@ public final class DuicClientUtils {
      * @param url https://duic.zhudy.io/api/v1/apps/{name}/{profile}
      * @return 配置
      */
-    public static Map<String, Object> getProperties(String url) {
+    public static ConfigResponse getProperties(String url) {
         return getProperties(url, null);
     }
 
@@ -106,15 +106,15 @@ public final class DuicClientUtils {
      * @param configToken 配置访问令牌多个采用英文逗号分隔
      * @return 配置
      */
-    public static Map<String, Object> getProperties(String url, String configToken) {
+    public static ConfigResponse getProperties(String url, String configToken) {
         return get(url, configToken);
     }
 
-    private static Map<String, Object> get(String url, String configToken) {
+    private static ConfigResponse get(String url, String configToken) {
         return get(HttpUrl.parse(url), configToken);
     }
 
-    private static Map<String, Object> get(HttpUrl url, String configToken) {
+    private static ConfigResponse get(HttpUrl url, String configToken) {
         Request.Builder reqBuilder = new Request.Builder();
         reqBuilder.get().url(url);
         if (configToken != null && !configToken.isEmpty()) {
@@ -130,7 +130,10 @@ public final class DuicClientUtils {
                         + resp.body().string());
             }
 
-            return JsonParserFactory.getJsonParser().parse(resp.body().string());
+            // TIPS: 配置状态与配置需要同步返回，避免集群状态更新导致状态与配置不对应
+            String state = resp.header("x-duic-config-state");
+            Map<String, Object> properties = JsonParserFactory.getJsonParser().parse(resp.body().string());
+            return new ConfigResponse(state, properties);
         } catch (IOException e) {
             throw new DuicClientException(e);
         } finally {
